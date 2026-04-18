@@ -123,7 +123,6 @@
     
     <div id="match-overlay" class="hidden">
         <div id="match-text">MATCH!</div>
-        <div id="match-with"></div>
     </div>
 
     <script>
@@ -169,7 +168,10 @@
             displayName(data);
             
             if (data.match) {
-                document.getElementById('match-with').textContent = 'Matched with: ' + data.match;
+                const matchText = data.likedName 
+                    ? `${data.likedName} match with ${data.match}`
+                    : `Match with ${data.match}`;
+                document.getElementById('match-text').textContent = matchText;
                 document.getElementById('match-overlay').classList.remove('hidden');
                 setTimeout(() => {
                     document.getElementById('match-overlay').classList.add('hidden');
