@@ -27,6 +27,7 @@ const ui = {
   hostBack: $("host-back"),
   hostForm: $("host-form"),
   hostName: $("host-name"),
+  hostGender: $("host-gender"),
   hostCount: $("host-count"),
   hostError: $("host-error"),
   joinBack: $("join-back"),
@@ -70,6 +71,15 @@ const ui = {
 };
 
 let names = [];
+// Name IDs are indexes into `names`, built by concatenating these files in this
+// order. Both players load the same files, so IDs match on each side.
+const NAME_FILES = [
+  ["boy", "boy-names.txt"],
+  ["girl", "girl-names.txt"],
+  ["both", "both-names.txt"],
+];
+// IDs for each file, e.g. namePools.boy = [0, 1, ...].
+let namePools = { boy: [], girl: [], both: [] };
 let currentScreen = "landing";
 let ignoreHashChange = false;
 let toastTimer = null;
@@ -777,6 +787,11 @@ function sendResults() {
   return sendToPeer({ type: "results", matches: state.results.slice() });
 }
 
+function sendHello() {
+  if (state.role !== "joiner") return;
+  sendToPeer({ type: "hello", name: state.displayName });
+}
+
 function sendDone() {
   if (state.role !== "joiner" || !state.localDone) return;
   sendToPeer({
@@ -804,6 +819,13 @@ function parseMessage(raw) {
 function handleHostMessage(raw) {
   const message = parseMessage(raw);
   if (!message) return;
+  if (message.type === "hello") {
+    if (typeof message.name !== "string") return;
+    state.partnerName = cleanName(message.name, state.partnerName || "Partner");
+    persist();
+    updateWaitingPlayers();
+    return;
+  }
   if (message.type !== "done" || state.results) return;
 
   const deckSet = new Set(state.deck);
@@ -1061,12 +1083,10 @@ function connectJoinerPeer() {
   peer.on("open", () => {
     if (state.peer !== peer) return;
     state.peerOpen = true;
+    // No metadata: anything in it is relayed through the signaling server.
+    // Identifying info goes over the encrypted data channel instead (sendHello).
     const conn = peer.connect(`${PEER_PREFIX}${state.code}`, {
       reliable: true,
-      metadata: {
-        name: state.displayName,
-        token: state.token,
-      },
     });
     state.conn = conn;
 
@@ -1082,6 +1102,7 @@ function connectJoinerPeer() {
       } else if (currentScreen === "game") {
         setOverlay("Connected", "Syncing your deck…", true);
       }
+      sendHello();
       if (state.localDone) sendDone();
       updateGameUI();
     };
@@ -1326,9 +1347,8 @@ function handleIncomingConnection(conn) {
   state.connected = false;
   state.waitingError = "";
 
-  const metadata =
-    conn.metadata && typeof conn.metadata === "object" ? conn.metadata : {};
-  state.partnerName = cleanName(metadata.name, "Partner");
+  // The partner's name arrives later in a "hello" message over the data channel.
+  state.partnerName = cleanName(state.partnerName, "Partner");
 
   if (!state.results) {
     state.remoteDone = false;
@@ -1412,12 +1432,18 @@ function restoreJoiner(saved) {
   state.allowReconnect = !saved.results;
 }
 
-function buildDeck(count) {
+function poolFor(gender) {
+  if (gender === "boy") return namePools.boy.concat(namePools.both);
+  if (gender === "girl") return namePools.girl.concat(namePools.both);
+  return Array.from({ length: names.length }, (_, index) => index);
+}
+
+function buildDeck(count, gender) {
+  const ids = poolFor(gender);
   const total = Math.max(
     1,
-    Math.min(Number.isInteger(count) ? count : names.length, names.length)
+    Math.min(Number.isInteger(count) ? count : ids.length, ids.length)
   );
-  const ids = Array.from({ length: names.length }, (_, index) => index);
   for (let i = ids.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [ids[i], ids[j]] = [ids[j], ids[i]];
@@ -1426,28 +1452,31 @@ function buildDeck(count) {
 }
 
 function populateCountOptions() {
+  const available = poolFor(ui.hostGender.value).length;
   const values = [10, 20, 30, 50, 75, 100, 150, 200, 300].filter(
-    (value) => value < names.length
+    (value) => value < available
   );
-  values.push(names.length);
+  values.push(available);
   const previous = Number(ui.hostCount.value);
   ui.hostCount.replaceChildren();
 
   for (const value of values) {
     const option = document.createElement("option");
     option.value = String(value);
-    option.textContent = value === names.length ? `All ${names.length}` : String(value);
+    option.textContent = value === available ? `All ${available}` : String(value);
     ui.hostCount.appendChild(option);
   }
 
   if (values.includes(previous)) {
     ui.hostCount.value = String(previous);
+  } else if (previous > available) {
+    ui.hostCount.value = String(available);
   } else {
     ui.hostCount.value = String(values.includes(30) ? 30 : values[0]);
   }
 }
 
-function startNewHostLobby(displayName, count) {
+function startNewHostLobby(displayName, count, gender) {
   const oldHost = findActiveSession("host");
   if (oldHost) {
     removeStorage(sessionKey(oldHost.code, "host"));
@@ -1461,7 +1490,7 @@ function startNewHostLobby(displayName, count) {
   state.displayName = cleanName(displayName, "Host");
   state.code = randomCode();
   state.partnerName = "Partner";
-  state.deck = buildDeck(count);
+  state.deck = buildDeck(count, gender);
   state.allowReconnect = true;
   persist();
 
@@ -1665,21 +1694,31 @@ function routeFromHash() {
   showLanding();
 }
 
-async function loadNames() {
-  const response = await fetch("names.txt", { cache: "no-cache" });
+async function loadNameFile(file) {
+  const response = await fetch(file, { cache: "no-cache" });
   if (!response.ok) {
-    throw new Error(`names.txt returned ${response.status}`);
+    throw new Error(`${file} returned ${response.status}`);
   }
   const text = await response.text();
-  const list = text
+  return text
     .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  if (!list.length) {
-    throw new Error("names.txt is empty");
+}
+
+async function loadNames() {
+  const lists = await Promise.all(NAME_FILES.map(([, file]) => loadNameFile(file)));
+  const all = [];
+  const pools = {};
+  NAME_FILES.forEach(([key], index) => {
+    pools[key] = lists[index].map((_, offset) => all.length + offset);
+    all.push(...lists[index]);
+  });
+  if (!all.length) {
+    throw new Error("the name lists are empty");
   }
-  return list;
+  return { all, pools };
 }
 
 function bindEvents() {
@@ -1704,6 +1743,10 @@ function bindEvents() {
   ui.hostBack.addEventListener("click", backToLanding);
   ui.joinBack.addEventListener("click", backToLanding);
 
+  ui.hostGender.addEventListener("change", () => {
+    if (names.length) populateCountOptions();
+  });
+
   ui.hostForm.addEventListener("submit", (event) => {
     event.preventDefault();
     if (!names.length) {
@@ -1712,7 +1755,7 @@ function bindEvents() {
     }
     hideHostError();
     const count = Number.parseInt(ui.hostCount.value, 10);
-    startNewHostLobby(ui.hostName.value, count);
+    startNewHostLobby(ui.hostName.value, count, ui.hostGender.value);
   });
 
   ui.joinForm.addEventListener("submit", (event) => {
@@ -1782,7 +1825,9 @@ function bindEvents() {
 async function init() {
   bindEvents();
   try {
-    names = await loadNames();
+    const loaded = await loadNames();
+    names = loaded.all;
+    namePools = loaded.pools;
     populateCountOptions();
     routeFromHash();
   } catch (error) {
@@ -1790,7 +1835,7 @@ async function init() {
     ui.btnJoin.disabled = true;
     const hint = document.querySelector("#screen-landing .hint");
     if (hint) {
-      hint.textContent = "Could not load names.txt. Check the deployment and reload.";
+      hint.textContent = "Could not load the name lists. Check the deployment and reload.";
       hint.style.color = "var(--no)";
     }
     toast(`Could not load names (${error.message}).`, 8000);
