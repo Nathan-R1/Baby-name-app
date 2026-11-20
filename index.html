@@ -16,107 +16,95 @@
         <h1 id="landing-title">Baby Names</h1>
         <p class="lede">Swipe through names together and keep the ones you both love.</p>
         <div class="actions stack">
-          <button id="btn-host" class="btn primary" type="button">Host a lobby</button>
-          <button id="btn-join" class="btn" type="button">Join a lobby</button>
+          <button id="btn-new" class="btn primary" type="button">Start a new game</button>
         </div>
         <div id="resume-card" class="resume-card" hidden>
           <div>
-            <p class="eyebrow">Active lobby</p>
-            <strong id="resume-code">------</strong>
+            <p class="eyebrow">Your game</p>
+            <strong id="resume-text">In progress</strong>
           </div>
           <button id="btn-resume" class="btn small" type="button">Resume</button>
         </div>
-        <p class="hint">Works best when both phones are on the same WiFi.</p>
+        <form id="landing-paste" class="paste-form" novalidate>
+          <label class="field">
+            <span>Got a link from your partner?</span>
+            <input id="landing-paste-input" type="text" autocomplete="off" spellcheck="false" placeholder="Paste it here">
+          </label>
+          <button class="btn" type="submit">Open link</button>
+        </form>
+        <p id="landing-hint" class="hint">No account needed. Everything stays on your phones.</p>
       </div>
     </section>
 
-    <section id="screen-host-setup" class="screen" aria-labelledby="host-setup-title">
+    <section id="screen-setup" class="screen" aria-labelledby="setup-title">
       <header class="topbar">
-        <button id="host-back" class="icon-btn" type="button" aria-label="Back">&#8592;</button>
-        <h2 id="host-setup-title">Host a lobby</h2>
+        <button id="setup-back" class="icon-btn" type="button" aria-label="Back">&#8592;</button>
+        <h2 id="setup-title">New game</h2>
         <span class="topbar-spacer"></span>
       </header>
-      <form id="host-form" class="panel" novalidate>
+      <form id="setup-form" class="panel" novalidate>
         <label class="field">
           <span>Your name</span>
-          <input id="host-name" type="text" maxlength="30" autocomplete="nickname" placeholder="e.g. Alex">
+          <input id="setup-name" type="text" maxlength="30" autocomplete="nickname" placeholder="e.g. Alex">
         </label>
         <label class="field">
           <span>Names</span>
-          <select id="host-gender">
-            <option value="all" selected>All names</option>
-            <option value="boy">Boy names</option>
-            <option value="girl">Girl names</option>
+          <select id="setup-gender">
+            <option value="a" selected>All names</option>
+            <option value="b">Boy names</option>
+            <option value="g">Girl names</option>
           </select>
         </label>
         <label class="field">
           <span>Number of names</span>
-          <select id="host-count"></select>
+          <select id="setup-count"></select>
         </label>
-        <p id="host-error" class="error" role="alert" hidden></p>
-        <button class="btn primary" type="submit">Create lobby</button>
+        <button class="btn primary" type="submit">Create game</button>
       </form>
-      <p class="hint">Your partner will join with a short code or QR link.</p>
+      <p class="hint">You'll both swipe the same names in the same order.</p>
     </section>
 
-    <section id="screen-join" class="screen" aria-labelledby="join-title">
+    <section id="screen-invite" class="screen" aria-labelledby="invite-title">
       <header class="topbar">
-        <button id="join-back" class="icon-btn" type="button" aria-label="Back">&#8592;</button>
-        <h2 id="join-title">Join a lobby</h2>
+        <button id="invite-back" class="icon-btn" type="button" aria-label="Back">&#8592;</button>
+        <h2 id="invite-title">Invite your partner</h2>
         <span class="topbar-spacer"></span>
       </header>
-      <form id="join-form" class="panel" novalidate>
-        <label class="field">
-          <span>Lobby code</span>
-          <input id="join-code" type="text" maxlength="200" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. k4m9pq">
-        </label>
+      <div class="panel share-panel">
+        <p id="invite-summary" class="lede"></p>
+        <div id="invite-qr" class="qr" aria-label="QR code for the invite link"></div>
+        <div class="actions stack">
+          <button id="invite-share" class="btn" type="button">Share invite link</button>
+          <button id="invite-start" class="btn primary" type="button">Start swiping</button>
+        </div>
+        <p class="hint">Send the link, then you can both swipe at the same time.</p>
+      </div>
+    </section>
+
+    <section id="screen-intro" class="screen" aria-labelledby="intro-title">
+      <header class="topbar">
+        <button id="intro-back" class="icon-btn" type="button" aria-label="Back">&#8592;</button>
+        <h2 id="intro-title">You're invited</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+      <form id="intro-form" class="panel" novalidate>
+        <p id="intro-summary" class="lede"></p>
+        <p id="intro-note" class="banner" hidden></p>
         <label class="field">
           <span>Your name</span>
-          <input id="join-name" type="text" maxlength="30" autocomplete="nickname" placeholder="e.g. Sam">
+          <input id="intro-name" type="text" maxlength="30" autocomplete="nickname" placeholder="e.g. Sam">
         </label>
-        <p id="join-error" class="error" role="alert" hidden></p>
-        <p id="join-status" class="status" role="status"></p>
-        <button id="join-submit" class="btn primary" type="submit">Join lobby</button>
+        <button class="btn primary" type="submit">Start swiping</button>
       </form>
-      <p class="hint">You can paste the invite link or just the code.</p>
-    </section>
-
-    <section id="screen-waiting" class="screen" aria-labelledby="waiting-title">
-      <header class="topbar">
-        <span class="topbar-spacer"></span>
-        <h2 id="waiting-title">Lobby</h2>
-        <button id="waiting-leave" class="text-btn" type="button">Leave</button>
-      </header>
-      <div class="panel waiting-panel">
-        <p class="eyebrow">Lobby code</p>
-        <button id="waiting-code" class="code" type="button" title="Copy code">------</button>
-        <div id="qr" class="qr" aria-label="QR code for the invite link"></div>
-        <div class="actions">
-          <button id="copy-link" class="btn" type="button">Copy invite link</button>
-        </div>
-        <p id="waiting-status" class="status">Waiting for your partner to join&hellip;</p>
-        <div class="players">
-          <div class="player">
-            <span class="dot on"></span>
-            <span id="waiting-you">You</span>
-          </div>
-          <div id="waiting-partner-row" class="player muted">
-            <span class="dot"></span>
-            <span id="waiting-partner">Partner not connected</span>
-          </div>
-        </div>
-        <p class="hint">Keep this tab open while your partner joins.</p>
-      </div>
     </section>
 
     <section id="screen-game" class="screen" aria-labelledby="game-title">
       <header class="topbar game-topbar">
-        <button id="game-leave" class="icon-btn" type="button" aria-label="Leave lobby">&#8592;</button>
+        <button id="game-back" class="icon-btn" type="button" aria-label="Back to home">&#8592;</button>
         <div class="progress-wrap">
           <h2 id="game-title" class="visually-hidden">Swipe names</h2>
           <div class="progress-meta">
             <span id="progress-text">0 of 0</span>
-            <span id="game-role" class="role-badge">Host</span>
           </div>
           <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
         </div>
@@ -133,13 +121,6 @@
           <span id="hint-no" class="choice choice-no">No</span>
           <span id="hint-yes" class="choice choice-yes">Yes</span>
         </div>
-        <div id="game-overlay" class="game-overlay" hidden>
-          <div class="overlay-card">
-            <h3 id="overlay-title">You're done!</h3>
-            <p id="overlay-message">Waiting for your partner to finish.</p>
-            <div id="overlay-spinner" class="spinner" aria-hidden="true"></div>
-          </div>
-        </div>
       </div>
 
       <div class="game-actions">
@@ -147,12 +128,35 @@
         <button id="btn-finish" class="btn subtle" type="button">Finish early</button>
         <button id="btn-yes" class="round yes" type="button">Yes</button>
       </div>
-      <p id="game-status" class="status" role="status"></p>
+      <p class="status">Swipe right for names you love.</p>
+    </section>
+
+    <section id="screen-done" class="screen" aria-labelledby="done-title">
+      <header class="topbar">
+        <button id="done-back" class="icon-btn" type="button" aria-label="Back to home">&#8592;</button>
+        <h2 id="done-title">You're done!</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+      <div class="panel share-panel">
+        <p id="done-summary" class="lede"></p>
+        <div id="done-qr" class="qr" aria-label="QR code for your picks link"></div>
+        <div class="actions stack">
+          <button id="done-share" class="btn primary" type="button">Send my picks</button>
+        </div>
+        <p class="hint">Finished second? Open your partner's link instead and your matches will appear.</p>
+        <form id="done-paste" class="paste-form" novalidate>
+          <label class="field">
+            <span>Partner's link</span>
+            <input id="done-paste-input" type="text" autocomplete="off" spellcheck="false" placeholder="Paste it here">
+          </label>
+          <button class="btn" type="submit">Show matches</button>
+        </form>
+      </div>
     </section>
 
     <section id="screen-results" class="screen" aria-labelledby="results-title">
       <header class="topbar">
-        <span class="topbar-spacer"></span>
+        <button id="results-back" class="icon-btn" type="button" aria-label="Back to home">&#8592;</button>
         <h2>Results</h2>
         <span class="topbar-spacer"></span>
       </header>
@@ -162,8 +166,10 @@
         <p id="results-subtitle" class="lede">Names you both liked.</p>
         <ul id="results-list" class="matches"></ul>
         <div class="actions stack">
-          <button id="results-home" class="btn primary" type="button">Back to home</button>
+          <button id="results-share" class="btn" type="button">Send results to your partner</button>
+          <button id="results-new" class="btn primary" type="button">Start a new game</button>
         </div>
+        <p id="results-hint" class="hint">Sending the results is optional. They only include your matches.</p>
       </div>
     </section>
   </main>
@@ -171,7 +177,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="qrcode.js"></script>
-  <script src="peerjs.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
