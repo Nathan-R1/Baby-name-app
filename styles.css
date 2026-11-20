@@ -816,3 +816,24 @@ h3 {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Link-based play: share screens and paste boxes */
+.share-panel {
+  text-align: center;
+}
+.share-panel .lede {
+  margin: 0 0 20px;
+}
+.share-panel .actions {
+  margin-top: 0;
+}
+.paste-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 26px;
+  text-align: left;
+}
+.paste-form .field {
+  margin-bottom: 0;
+}
