@@ -1,186 +1,177 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Baby Names</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 50px;
-        }
-        #name-display {
-            font-size: 72px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 60px;
-            text-align: center;
-            min-height: 100px;
-        }
-        .buttons {
-            display: flex;
-            gap: 40px;
-        }
-        button {
-            font-size: 24px;
-            padding: 20px 50px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-        button:active {
-            transform: scale(0.95);
-        }
-        #no-btn {
-            background-color: #e74c3c;
-            color: white;
-        }
-        #yes-btn {
-            background-color: #27ae60;
-            color: white;
-        }
-        #remaining {
-            position: fixed;
-            bottom: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-        #login-screen {
-            text-align: center;
-        }
-        #login-screen input {
-            font-size: 24px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-        }
-        #login-screen button {
-            background-color: #3498db;
-            color: white;
-        }
-        .hidden {
-            display: none !important;
-        }
-        #match-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        #match-text {
-            font-size: 80px;
-            font-weight: bold;
-            color: #f1c40f;
-            text-shadow: 0 0 20px #e74c3c, 0 0 40px #e74c3c;
-            animation: bounce 0.5s ease infinite alternate;
-        }
-        #match-with {
-            font-size: 24px;
-            color: white;
-            margin-top: 20px;
-        }
-        @keyframes bounce {
-            from { transform: translateY(0) scale(1); }
-            to { transform: translateY(-30px) scale(1.1); }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fdf6ef">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23d95572'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-size='38' font-weight='bold' text-anchor='middle' fill='white'%3EB%3C/text%3E%3C/svg%3E">
+  <title>Baby Names</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="login-screen">
-        <h1>baby names</h1>
-        <input type="text" id="username" placeholder="Enter your name">
-        <br>
-        <button onclick="login()">Start</button>
-    </div>
-    
-    <div id="app-screen" class="hidden">
-        <h1 id="user-header">baby names</h1>
-        <div id="name-display">Loading...</div>
-        <div class="buttons">
-            <button id="no-btn">No</button>
-            <button id="yes-btn">Yes</button>
+  <main id="app">
+    <section id="screen-landing" class="screen active" aria-labelledby="landing-title">
+      <div class="landing-hero">
+        <p class="eyebrow">For two</p>
+        <h1 id="landing-title">Baby Names</h1>
+        <p class="lede">Swipe through names together and keep the ones you both love.</p>
+        <div class="actions stack">
+          <button id="btn-host" class="btn primary" type="button">Host a lobby</button>
+          <button id="btn-join" class="btn" type="button">Join a lobby</button>
         </div>
-        <div id="remaining"></div>
-    </div>
-    
-    <div id="match-overlay" class="hidden">
-        <div id="match-text">MATCH!</div>
-    </div>
+        <div id="resume-card" class="resume-card" hidden>
+          <div>
+            <p class="eyebrow">Active lobby</p>
+            <strong id="resume-code">------</strong>
+          </div>
+          <button id="btn-resume" class="btn small" type="button">Resume</button>
+        </div>
+        <p class="hint">Works best when both phones are on the same WiFi.</p>
+      </div>
+    </section>
 
-    <script>
-        let username = '';
-        
-        async function login() {
-            username = document.getElementById('username').value.trim();
-            if (!username) {
-                alert('Please enter your name');
-                return;
-            }
-            
-            const response = await fetch('/api/login/' + encodeURIComponent(username));
-            const data = await response.json();
-            
-            document.getElementById('user-header').textContent = 'Baby names for: ' + username;
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
-            
-            displayName(data);
-        }
-        
-        function displayName(data) {
-            document.getElementById('name-display').textContent = data.name || 'No more names!';
-            document.getElementById('remaining').textContent = data.remaining !== undefined ? `${data.remaining} names remaining` : '';
-        }
-        
-        async function handleNo() {
-            const response = await fetch('/api/dislike', { 
-                method: 'POST',
-                headers: { 'X-Username': username }
-            });
-            const data = await response.json();
-            displayName(data);
-        }
-        
-        async function handleYes() {
-            const response = await fetch('/api/like', { 
-                method: 'POST',
-                headers: { 'X-Username': username }
-            });
-            const data = await response.json();
-            displayName(data);
-            
-            if (data.match) {
-                const matchText = data.likedName 
-                    ? `${data.likedName} match with ${data.match}`
-                    : `Match with ${data.match}`;
-                document.getElementById('match-text').textContent = matchText;
-                document.getElementById('match-overlay').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('match-overlay').classList.add('hidden');
-                }, 3000);
-            }
-        }
-        
-        document.getElementById('no-btn').addEventListener('click', handleNo);
-        document.getElementById('yes-btn').addEventListener('click', handleYes);
-    </script>
+    <section id="screen-host-setup" class="screen" aria-labelledby="host-setup-title">
+      <header class="topbar">
+        <button id="host-back" class="icon-btn" type="button" aria-label="Back">&#8592;</button>
+        <h2 id="host-setup-title">Host a lobby</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+      <form id="host-form" class="panel" novalidate>
+        <label class="field">
+          <span>Your name</span>
+          <input id="host-name" type="text" maxlength="30" autocomplete="nickname" placeholder="e.g. Alex">
+        </label>
+        <label class="field">
+          <span>Names</span>
+          <select id="host-gender">
+            <option value="all" selected>All names</option>
+            <option value="boy">Boy names</option>
+            <option value="girl">Girl names</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Number of names</span>
+          <select id="host-count"></select>
+        </label>
+        <p id="host-error" class="error" role="alert" hidden></p>
+        <button class="btn primary" type="submit">Create lobby</button>
+      </form>
+      <p class="hint">Your partner will join with a short code or QR link.</p>
+    </section>
+
+    <section id="screen-join" class="screen" aria-labelledby="join-title">
+      <header class="topbar">
+        <button id="join-back" class="icon-btn" type="button" aria-label="Back">&#8592;</button>
+        <h2 id="join-title">Join a lobby</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+      <form id="join-form" class="panel" novalidate>
+        <label class="field">
+          <span>Lobby code</span>
+          <input id="join-code" type="text" maxlength="200" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. k4m9pq">
+        </label>
+        <label class="field">
+          <span>Your name</span>
+          <input id="join-name" type="text" maxlength="30" autocomplete="nickname" placeholder="e.g. Sam">
+        </label>
+        <p id="join-error" class="error" role="alert" hidden></p>
+        <p id="join-status" class="status" role="status"></p>
+        <button id="join-submit" class="btn primary" type="submit">Join lobby</button>
+      </form>
+      <p class="hint">You can paste the invite link or just the code.</p>
+    </section>
+
+    <section id="screen-waiting" class="screen" aria-labelledby="waiting-title">
+      <header class="topbar">
+        <span class="topbar-spacer"></span>
+        <h2 id="waiting-title">Lobby</h2>
+        <button id="waiting-leave" class="text-btn" type="button">Leave</button>
+      </header>
+      <div class="panel waiting-panel">
+        <p class="eyebrow">Lobby code</p>
+        <button id="waiting-code" class="code" type="button" title="Copy code">------</button>
+        <div id="qr" class="qr" aria-label="QR code for the invite link"></div>
+        <div class="actions">
+          <button id="copy-link" class="btn" type="button">Copy invite link</button>
+        </div>
+        <p id="waiting-status" class="status">Waiting for your partner to join&hellip;</p>
+        <div class="players">
+          <div class="player">
+            <span class="dot on"></span>
+            <span id="waiting-you">You</span>
+          </div>
+          <div id="waiting-partner-row" class="player muted">
+            <span class="dot"></span>
+            <span id="waiting-partner">Partner not connected</span>
+          </div>
+        </div>
+        <p class="hint">Keep this tab open while your partner joins.</p>
+      </div>
+    </section>
+
+    <section id="screen-game" class="screen" aria-labelledby="game-title">
+      <header class="topbar game-topbar">
+        <button id="game-leave" class="icon-btn" type="button" aria-label="Leave lobby">&#8592;</button>
+        <div class="progress-wrap">
+          <h2 id="game-title" class="visually-hidden">Swipe names</h2>
+          <div class="progress-meta">
+            <span id="progress-text">0 of 0</span>
+            <span id="game-role" class="role-badge">Host</span>
+          </div>
+          <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+        </div>
+        <span class="topbar-spacer"></span>
+      </header>
+
+      <div id="game-banner" class="banner" role="status" hidden></div>
+
+      <div class="deck-area">
+        <div class="card card-back" aria-hidden="true"></div>
+        <div id="card" class="card" role="group" aria-labelledby="card-name">
+          <span class="card-eyebrow">Would you name your baby</span>
+          <h2 id="card-name" class="card-name">&nbsp;</h2>
+          <span id="hint-no" class="choice choice-no">No</span>
+          <span id="hint-yes" class="choice choice-yes">Yes</span>
+        </div>
+        <div id="game-overlay" class="game-overlay" hidden>
+          <div class="overlay-card">
+            <h3 id="overlay-title">You're done!</h3>
+            <p id="overlay-message">Waiting for your partner to finish.</p>
+            <div id="overlay-spinner" class="spinner" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-actions">
+        <button id="btn-no" class="round no" type="button">No</button>
+        <button id="btn-finish" class="btn subtle" type="button">Finish early</button>
+        <button id="btn-yes" class="round yes" type="button">Yes</button>
+      </div>
+      <p id="game-status" class="status" role="status"></p>
+    </section>
+
+    <section id="screen-results" class="screen" aria-labelledby="results-title">
+      <header class="topbar">
+        <span class="topbar-spacer"></span>
+        <h2>Results</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+      <div class="panel results-panel">
+        <div id="results-icon" class="results-icon" aria-hidden="true"></div>
+        <h2 id="results-title">It's a match!</h2>
+        <p id="results-subtitle" class="lede">Names you both liked.</p>
+        <ul id="results-list" class="matches"></ul>
+        <div class="actions stack">
+          <button id="results-home" class="btn primary" type="button">Back to home</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="qrcode.js"></script>
+  <script src="peerjs.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
